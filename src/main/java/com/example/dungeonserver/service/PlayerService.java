@@ -2,9 +2,14 @@ package com.example.dungeonserver.service;
 
 import com.example.dungeonserver.model.Item;
 import com.example.dungeonserver.model.Player;
+import com.example.dungeonserver.model.Monster;
 import com.example.dungeonserver.repository.PlayerRepository;
+import com.example.dungeonserver.repository.MonsterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class PlayerService {
@@ -12,11 +17,14 @@ public class PlayerService {
     @Autowired
     private PlayerRepository playerRepository;
 
+    // --- NEW: Added the Monster Database connection! ---
+    @Autowired
+    private MonsterRepository monsterRepository;
+
     public Player spawnPlayer(String name) {
         Player player = new Player();
         player.setName(name);
 
-        // Game Logic: Roll for stats
         int bonusStr = (int)(Math.random() * 5);
         player.setStrength(10 + bonusStr);
 
@@ -25,20 +33,15 @@ public class PlayerService {
 
         player.setGold(50);
 
-        // --- NEW: STARTER LOOT ---
         Item starterWeapon = new Item();
         starterWeapon.setName("Rusty Sword");
         starterWeapon.setType("WEAPON");
         starterWeapon.setPower(3);
         starterWeapon.setValue(5);
 
-        // Link the item to the player
         starterWeapon.setPlayer(player);
-
-        // Put the item in the player's inventory
         player.getInventory().add(starterWeapon);
 
-        // Save the player (This will automatically save the item too because of CascadeType.ALL)
         return playerRepository.save(player);
     }
 
@@ -47,63 +50,64 @@ public class PlayerService {
                 .orElseThrow(() -> new RuntimeException("Player not found!"));
     }
 
-    // --- NEW: HEALING ACTION ---
     public Player healPlayer(Long playerId) {
         Player player = getPlayer(playerId);
 
-        // Rule 1: Are they dead?
         if (player.getHealth() <= 0) {
             throw new RuntimeException("You are dead! Healing won't help you now.");
         }
-
-        // Rule 2: Are they already full health?
         if (player.getHealth() >= player.getMaxHealth()) {
             throw new RuntimeException("You are already at full health!");
         }
-
-        // Rule 3: Do they have enough gold? (Cost: 15 Gold)
         if (player.getGold() < 15) {
             throw new RuntimeException("Not enough gold! The healer demands 15 gold.");
         }
 
-        // Action: Take gold, restore health
         player.setGold(player.getGold() - 15);
         player.setHealth(player.getMaxHealth());
 
         return playerRepository.save(player);
     }
 
-    // --- NEW: GAMEPLAY ACTION ---
+    // --- NEW: GAMEPLAY ACTION (Now with Real Monsters!) ---
     public Player exploreDungeon(Long playerId) {
-        // 1. Find the player in the database
         Player player = getPlayer(playerId);
 
-        // 2. Check if they are dead
         if (player.getHealth() <= 0) {
-            throw new RuntimeException("This player is dead and cannot explore!");
+            throw new RuntimeException("You are dead! Visit the healer.");
         }
 
-        // 3. Simulate a fight (RNG)
-        int damageTaken = (int)(Math.random() * 10);
-        int goldFound = (int)(Math.random() * 20) + 5;
-        int xpGained = 25;
+        // 1. Get all monsters from the database
+        List<Monster> monsters = monsterRepository.findAll();
 
-        // 4. Update the player's stats
+        // 2. Pick a random monster
+        Random random = new Random();
+        Monster enemy = monsters.get(random.nextInt(monsters.size()));
+
+        // 3. Combat Math: Enemy Strength minus Player Defense
+        int damageTaken = enemy.getStrength() - player.getDefense();
+        if (damageTaken < 0) damageTaken = 0; // Defense completely blocked it!
+
         player.setHealth(player.getHealth() - damageTaken);
-        player.setGold(player.getGold() + goldFound);
-        player.setExperience(player.getExperience() + xpGained);
 
-        // Simple level-up logic
-        if (player.getExperience() >= 100) {
-            player.setLevel(player.getLevel() + 1);
-            player.setExperience(player.getExperience() - 100); // Reset XP
-            player.setMaxHealth(player.getMaxHealth() + 20);
-            player.setHealth(player.getMaxHealth()); // Full heal on level up!
-            player.setStrength(player.getStrength() + 2);
+        // 4. Did you survive?
+        if (player.getHealth() > 0) {
+            player.setGold(player.getGold() + enemy.getGoldDrop());
+            player.setExperience(player.getExperience() + 25);
+
+            // Level Up Logic!
+            if (player.getExperience() >= 100) {
+                player.setLevel(player.getLevel() + 1);
+                player.setExperience(0);
+                player.setMaxHealth(player.getMaxHealth() + 20);
+                player.setHealth(player.getMaxHealth()); // Fully heal on level up
+                player.setStrength(player.getStrength() + 5);
+                player.setDefense(player.getDefense() + 3);
+            }
+        } else {
+            player.setHealth(0); // Don't let health go below zero
         }
 
-        // 5. Save the updated player back to the database
         return playerRepository.save(player);
     }
 }
-//ready
