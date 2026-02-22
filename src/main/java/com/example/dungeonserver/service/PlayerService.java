@@ -47,6 +47,32 @@ public class PlayerService {
                 .orElseThrow(() -> new RuntimeException("Player not found!"));
     }
 
+    // --- NEW: HEALING ACTION ---
+    public Player healPlayer(Long playerId) {
+        Player player = getPlayer(playerId);
+
+        // Rule 1: Are they dead?
+        if (player.getHealth() <= 0) {
+            throw new RuntimeException("You are dead! Healing won't help you now.");
+        }
+
+        // Rule 2: Are they already full health?
+        if (player.getHealth() >= player.getMaxHealth()) {
+            throw new RuntimeException("You are already at full health!");
+        }
+
+        // Rule 3: Do they have enough gold? (Cost: 15 Gold)
+        if (player.getGold() < 15) {
+            throw new RuntimeException("Not enough gold! The healer demands 15 gold.");
+        }
+
+        // Action: Take gold, restore health
+        player.setGold(player.getGold() - 15);
+        player.setHealth(player.getMaxHealth());
+
+        return playerRepository.save(player);
+    }
+
     // --- NEW: GAMEPLAY ACTION ---
     public Player exploreDungeon(Long playerId) {
         // 1. Find the player in the database
