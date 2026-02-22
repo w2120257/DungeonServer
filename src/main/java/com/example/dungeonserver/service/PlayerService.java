@@ -46,5 +46,38 @@ public class PlayerService {
         return playerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Player not found!"));
     }
+
+    // --- NEW: GAMEPLAY ACTION ---
+    public Player exploreDungeon(Long playerId) {
+        // 1. Find the player in the database
+        Player player = getPlayer(playerId);
+
+        // 2. Check if they are dead
+        if (player.getHealth() <= 0) {
+            throw new RuntimeException("This player is dead and cannot explore!");
+        }
+
+        // 3. Simulate a fight (RNG)
+        int damageTaken = (int)(Math.random() * 10);
+        int goldFound = (int)(Math.random() * 20) + 5;
+        int xpGained = 25;
+
+        // 4. Update the player's stats
+        player.setHealth(player.getHealth() - damageTaken);
+        player.setGold(player.getGold() + goldFound);
+        player.setExperience(player.getExperience() + xpGained);
+
+        // Simple level-up logic
+        if (player.getExperience() >= 100) {
+            player.setLevel(player.getLevel() + 1);
+            player.setExperience(player.getExperience() - 100); // Reset XP
+            player.setMaxHealth(player.getMaxHealth() + 20);
+            player.setHealth(player.getMaxHealth()); // Full heal on level up!
+            player.setStrength(player.getStrength() + 2);
+        }
+
+        // 5. Save the updated player back to the database
+        return playerRepository.save(player);
+    }
 }
 //ready
