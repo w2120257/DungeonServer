@@ -51,17 +51,16 @@
 
     // Function to update the screen with the data from Java
     function updateUI(player) {
-        player.defense = undefined;
-        player.strength = undefined;
-        player.gold = undefined;
-        player.maxHealth = undefined;
-        player.health = undefined;
-        player.level = undefined;
-        player.experience = undefined;
+        // Print the data to the hidden developer console so we can see it!
+        console.log("Here is the player data from Java:", player);
+
         document.getElementById('playerCard').style.display = 'inline-block';
         currentPlayerId = player.id;
 
+        // 1. Update Name (Matches id="pName")
         document.getElementById('pName').innerText = player.name;
+
+        // 2. Update Stats (Matches id="pLevel", "pXp", etc.)
         document.getElementById('pLevel').innerText = player.level;
         document.getElementById('pXp').innerText = player.experience;
         document.getElementById('pHealth').innerText = player.health;
@@ -70,19 +69,17 @@
         document.getElementById('pStr').innerText = player.strength;
         document.getElementById('pDef').innerText = player.defense;
 
-        // --- NEW: INVENTORY LOGIC ---
-        const invList = document.getElementById('pInventory');
-        invList.innerHTML = ''; // Clear old list before updating
-
+        // 3. Update Inventory (Matches id="pInventory")
+        const inventoryList = document.getElementById('pInventory');
+        inventoryList.innerHTML = '';
         if (player.inventory && player.inventory.length > 0) {
-            // Loop through each item and create a list element
             player.inventory.forEach(item => {
                 const li = document.createElement('li');
-                li.innerText = `🗡️ ${item.name} (+${item.power} Power) - ${item.value}g`;
-                invList.appendChild(li);
+                li.innerHTML = `🗡️ ${item.name} (+${item.power} Power) - ${item.value}g`;
+                inventoryList.appendChild(li);
             });
         } else {
-            invList.innerHTML = '<li>No items.</li>';
+            inventoryList.innerHTML = '<li>Empty</li>';
         }
     }
 
