@@ -2,6 +2,8 @@ package com.example.dungeonserver.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -22,6 +24,10 @@ public class Player {
     // Progression
     private int level;
     private int experience;
+
+    // --- NEW: THE INVENTORY ---
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
+    private List<Item> inventory = new ArrayList<>();
 
     // Constructor
     public Player() {
