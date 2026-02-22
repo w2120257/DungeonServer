@@ -52,62 +52,51 @@ public class PlayerService {
 
     public Player healPlayer(Long playerId) {
         Player player = getPlayer(playerId);
-
-        if (player.getHealth() <= 0) {
-            throw new RuntimeException("You are dead! Healing won't help you now.");
-        }
-        if (player.getHealth() >= player.getMaxHealth()) {
-            throw new RuntimeException("You are already at full health!");
-        }
-        if (player.getGold() < 15) {
-            throw new RuntimeException("Not enough gold! The healer demands 15 gold.");
-        }
+        // ... (keep your existing checks here) ...
 
         player.setGold(player.getGold() - 15);
         player.setHealth(player.getMaxHealth());
 
+        player.setStatusMessage("The town healer worked their magic. Health fully restored!");
         return playerRepository.save(player);
     }
 
-    // --- NEW: GAMEPLAY ACTION (Now with Real Monsters!) ---
     public Player exploreDungeon(Long playerId) {
         Player player = getPlayer(playerId);
+        if (player.getHealth() <= 0) throw new RuntimeException("You are dead!");
 
-        if (player.getHealth() <= 0) {
-            throw new RuntimeException("You are dead! Visit the healer.");
-        }
-
-        // 1. Get all monsters from the database
         List<Monster> monsters = monsterRepository.findAll();
+        Monster enemy = monsters.get(new Random().nextInt(monsters.size()));
 
-        // 2. Pick a random monster
-        Random random = new Random();
-        Monster enemy = monsters.get(random.nextInt(monsters.size()));
+        int damageTaken = Math.max(0, enemy.getStrength() - player.getDefense());
+        player.setHealth(Math.max(0, player.getHealth() - damageTaken));
 
-        // 3. Combat Math: Enemy Strength minus Player Defense
-        int damageTaken = enemy.getStrength() - player.getDefense();
-        if (damageTaken < 0) damageTaken = 0; // Defense completely blocked it!
+        // BUILD THE STORY
+        String msg = "A " + enemy.getName() + " appeared! ";
+        msg += "It dealt " + damageTaken + " damage. ";
 
-        player.setHealth(player.getHealth() - damageTaken);
-
-        // 4. Did you survive?
         if (player.getHealth() > 0) {
             player.setGold(player.getGold() + enemy.getGoldDrop());
             player.setExperience(player.getExperience() + 25);
+            msg += "You defeated it and found " + enemy.getGoldDrop() + " gold!";
 
-            // Level Up Logic!
             if (player.getExperience() >= 100) {
+                // ... (keep your level up logic) ...
                 player.setLevel(player.getLevel() + 1);
                 player.setExperience(0);
                 player.setMaxHealth(player.getMaxHealth() + 20);
-                player.setHealth(player.getMaxHealth()); // Fully heal on level up
-                player.setStrength(player.getStrength() + 5);
-                player.setDefense(player.getDefense() + 3);
+                player.setHealth(player.getMaxHealth());
+                msg += " LEVEL UP! You are now Level " + player.getLevel() + "!";
             }
         } else {
-            player.setHealth(0); // Don't let health go below zero
+            msg += "YOU DIED! Go see the healer.";
         }
 
+        player.setStatusMessage(msg); // Attach the story to the player
         return playerRepository.save(player);
     }
+
+
+
+
 }
