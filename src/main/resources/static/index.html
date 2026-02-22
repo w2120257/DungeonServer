@@ -38,6 +38,10 @@
 
     <button class="action-btn" onclick="explore()">Explore Dungeon</button>
     <button class="heal-btn" onclick="heal()">Visit Healer (15g)</button>
+
+    <hr>
+    <h3>🎒 Inventory</h3>
+    <ul id="pInventory" style="list-style-type: none; padding: 0; text-align: left;"></ul>
 </div>
 
 <div id="logs">Welcome to the Dungeon. Spawn a hero to begin!</div>
@@ -52,8 +56,8 @@
         player.gold = undefined;
         player.maxHealth = undefined;
         player.health = undefined;
-        player.experience = undefined;
         player.level = undefined;
+        player.experience = undefined;
         document.getElementById('playerCard').style.display = 'inline-block';
         currentPlayerId = player.id;
 
@@ -65,6 +69,21 @@
         document.getElementById('pGold').innerText = player.gold;
         document.getElementById('pStr').innerText = player.strength;
         document.getElementById('pDef').innerText = player.defense;
+
+        // --- NEW: INVENTORY LOGIC ---
+        const invList = document.getElementById('pInventory');
+        invList.innerHTML = ''; // Clear old list before updating
+
+        if (player.inventory && player.inventory.length > 0) {
+            // Loop through each item and create a list element
+            player.inventory.forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = `🗡️ ${item.name} (+${item.power} Power) - ${item.value}g`;
+                invList.appendChild(li);
+            });
+        } else {
+            invList.innerHTML = '<li>No items.</li>';
+        }
     }
 
     function logMessage(msg) {
