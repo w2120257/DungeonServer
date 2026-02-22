@@ -1,5 +1,6 @@
 package com.example.dungeonserver.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,5 +16,9 @@ public class Item {
     private int power;          // e.g., 5 (Damage or Defense)
     private int value;          // e.g., 10 Gold
 
-    // I will link this to a Player later!
+    // --- NEW: THE LINK TO THE PLAYER ---
+    @ManyToOne
+    @JoinColumn(name = "player_id")
+    @JsonIgnore // This prevents an infinite loop when showing JSON!
+    private Player player;
 }
