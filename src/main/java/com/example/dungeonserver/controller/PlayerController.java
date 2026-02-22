@@ -25,5 +25,11 @@ public class PlayerController {
     public Player getPlayer(@PathVariable Long id) {
         return playerService.getPlayer(id);
     }
+
+    // URL: http://localhost:8080/api/player/1/explore
+    @GetMapping("/{id}/explore")
+    public Player explore(@PathVariable Long id) {
+        return playerService.exploreDungeon(id);
+    }
 }
 //ready
