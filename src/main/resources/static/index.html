@@ -108,7 +108,7 @@
             })
             .then(data => {
                 updateUI(data);
-                logMessage(`You explored the dungeon! Stats updated.`);
+                logMessage(data.statusMessage);
             })
             .catch(err => logMessage(err.message));
     }
@@ -123,7 +123,7 @@
             })
             .then(data => {
                 updateUI(data);
-                logMessage(`The town healer restored your health!`);
+                logMessage(data.statusMessage);
             })
             .catch(err => logMessage(err.message));
     }
