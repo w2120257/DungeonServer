@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dungeon Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #2b2b2b; color: #fff; text-align: center; padding: 50px; }
+        .card { background-color: #3c3f41; padding: 20px; border-radius: 10px; display: inline-block; width: 300px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .stats { text-align: left; margin-top: 15px; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; margin: 10px 5px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #45a049; }
+        .action-btn { background-color: #d9534f; }
+        .action-btn:hover { background-color: #c9302c; }
+        .heal-btn { background-color: #5bc0de; }
+        .heal-btn:hover { background-color: #31b0d5; }
+        #logs { margin-top: 20px; color: #ffcc00; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<h1>🗡️ Dungeon Explorer 🛡️</h1>
+
+<div>
+    <label for="heroName"></label><input type="text" id="heroName" placeholder="Enter Hero Name" value="Arthur">
+    <button onclick="spawnPlayer()">Spawn Hero</button>
+</div>
+
+<div class="card" id="playerCard" style="display: none;">
+    <h2 id="pName">Name</h2>
+    <div class="stats">
+        <p><strong>Level:</strong> <span id="pLevel">1</span> (XP: <span id="pXp">0</span>/100)</p>
+        <p><strong>Health:</strong> <span id="pHealth">100</span> / <span id="pMaxHealth">100</span></p>
+        <p><strong>Gold:</strong> 🪙 <span id="pGold">0</span></p>
+        <p><strong>Strength:</strong> ⚔️ <span id="pStr">10</span> | <strong>Defense:</strong> 🛡️ <span id="pDef">5</span></p>
+    </div>
+
+    <hr>
+
+    <button class="action-btn" onclick="explore()">Explore Dungeon</button>
+    <button class="heal-btn" onclick="heal()">Visit Healer (15g)</button>
+</div>
+
+<div id="logs">Welcome to the Dungeon. Spawn a hero to begin!</div>
+
+<script>
+    let currentPlayerId = null;
+
+    // Function to update the screen with the data from Java
+    function updateUI(player) {
+        player.defense = undefined;
+        player.strength = undefined;
+        player.gold = undefined;
+        player.maxHealth = undefined;
+        player.health = undefined;
+        player.experience = undefined;
+        player.level = undefined;
+        document.getElementById('playerCard').style.display = 'inline-block';
+        currentPlayerId = player.id;
+
+        document.getElementById('pName').innerText = player.name;
+        document.getElementById('pLevel').innerText = player.level;
+        document.getElementById('pXp').innerText = player.experience;
+        document.getElementById('pHealth').innerText = player.health;
+        document.getElementById('pMaxHealth').innerText = player.maxHealth;
+        document.getElementById('pGold').innerText = player.gold;
+        document.getElementById('pStr').innerText = player.strength;
+        document.getElementById('pDef').innerText = player.defense;
+    }
+
+    function logMessage(msg) {
+        document.getElementById('logs').innerText = msg;
+    }
+
+    // Call the Java /spawn endpoint
+    function spawnPlayer() {
+        const name = document.getElementById('heroName').value;
+        fetch(`/api/player/spawn?name=${name}`)
+            .then(response => response.json())
+            .then(data => {
+                updateUI(data);
+                logMessage(`Hero ${data.name} has entered the world!`);
+            });
+    }
+
+    // Call the Java /explore endpoint
+    function explore() {
+        if (!currentPlayerId) return;
+        fetch(`/api/player/${currentPlayerId}/explore`)
+            .then(response => {
+                if(!response.ok) throw new Error("You are dead!");
+                return response.json();
+            })
+            .then(data => {
+                updateUI(data);
+                logMessage(`You explored the dungeon! Stats updated.`);
+            })
+            .catch(err => logMessage(err.message));
+    }
+
+    // Call the Java /heal endpoint
+    function heal() {
+        if (!currentPlayerId) return;
+        fetch(`/api/player/${currentPlayerId}/heal`)
+            .then(response => {
+                if(!response.ok) throw new Error("Not enough gold, or already full health!");
+                return response.json();
+            })
+            .then(data => {
+                updateUI(data);
+                logMessage(`The town healer restored your health!`);
+            })
+            .catch(err => logMessage(err.message));
+    }
+</script>
+</body>
+</html>
