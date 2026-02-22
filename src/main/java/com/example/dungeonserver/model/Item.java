@@ -22,3 +22,4 @@ public class Item {
     @JsonIgnore // This prevents an infinite loop when showing JSON!
     private Player player;
 }
+//ready

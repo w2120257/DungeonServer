@@ -40,4 +40,4 @@ public class Player {
         this.defense = 5;
     }
 }
-///
+//ready

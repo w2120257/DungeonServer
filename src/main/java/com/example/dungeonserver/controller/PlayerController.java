@@ -26,3 +26,4 @@ public class PlayerController {
         return playerService.getPlayer(id);
     }
 }
+//ready
