@@ -1,13 +1,17 @@
 package com.example.dungeonserver.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity
 @Data
 public class Player {
+    @Transient
+    private String statusMessage; // This won't be saved to the DB, just sent to the UI
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
