@@ -14,6 +14,8 @@ public class Item {
     private String name;        // e.g., "Rusty Sword"
     private String type;        // e.g., "WEAPON", "ARMOR", "POTION"
     private int power;          // e.g., 5 (Damage or Defense)
+
+    @Column(name = "item_value") // <-- IT GOES RIGHT HERE!
     private int value;          // e.g., 10 Gold
 
     // --- NEW: THE LINK TO THE PLAYER ---
@@ -22,4 +24,3 @@ public class Item {
     @JsonIgnore // This prevents an infinite loop when showing JSON!
     private Player player;
 }
-//ready
