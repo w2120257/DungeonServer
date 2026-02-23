@@ -3,26 +3,35 @@ package com.example.dungeonserver.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@NoArgsConstructor // Required for Hibernate to create empty objects
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;        // e.g., "Rusty Sword"
-    private String type;        // e.g., "WEAPON", "ARMOR", "POTION"
-    private int power;          // e.g., 5 (Damage or Defense)
+    private String name;
+    private String type;
+    private int power;
 
-    @Column(name = "item_value") // <-- IT GOES RIGHT HERE!
-    private int value;          // e.g., 10 Gold
+    @Column(name = "item_value")
+    private int value;
 
-    // --- NEW: THE LINK TO THE PLAYER ---
     @ManyToOne
     @JoinColumn(name = "player_id")
-    @JsonIgnore // This prevents an infinite loop when showing JSON!
+    @JsonIgnore
     private Player player;
-}
 
-//ready
+    // --- THE FIX: THE CONSTRUCTOR ---
+    // This allows you to use: new Item(name, type, power, value, player)
+    public Item(String name, String type, int power, int value, Player player) {
+        this.name = name;
+        this.type = type;
+        this.power = power;
+        this.value = value;
+        this.player = player;
+    }
+}
