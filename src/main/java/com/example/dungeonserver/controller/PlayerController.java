@@ -37,5 +37,12 @@ public class PlayerController {
     public Player heal(@PathVariable Long id) {
         return playerService.healPlayer(id);
     }
+
+    @GetMapping("/{id}/buy")
+    public Player buyItem(@PathVariable Long id, @RequestParam String name, @RequestParam int power, @RequestParam int cost) {
+        return playerService.buyItem(id, name, power, cost);
+    }
+
+
 }
 //ready
