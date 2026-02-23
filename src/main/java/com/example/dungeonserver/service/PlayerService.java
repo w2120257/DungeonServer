@@ -17,48 +17,14 @@ public class PlayerService {
     @Autowired
     private PlayerRepository playerRepository;
 
-    // --- NEW: Added the Monster Database connection! ---
     @Autowired
     private MonsterRepository monsterRepository;
 
-    public Player spawnPlayer(String name) {
-        Player player = new Player();
-        player.setName(name);
-
-        int bonusStr = (int)(Math.random() * 5);
-        player.setStrength(10 + bonusStr);
-
-        int bonusDef = (int)(Math.random() * 3);
-        player.setDefense(5 + bonusDef);
-
-        player.setGold(50);
-
-        Item starterWeapon = new Item();
-        starterWeapon.setName("Rusty Sword");
-        starterWeapon.setType("WEAPON");
-        starterWeapon.setPower(3);
-        starterWeapon.setValue(5);
-
-        starterWeapon.setPlayer(player);
-        player.getInventory().add(starterWeapon);
-
-        return playerRepository.save(player);
-    }
-
-    public Player getPlayer(Long id) {
-        return playerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Player not found!"));
-    }
-
-    public Player healPlayer(Long playerId) {
-        Player player = getPlayer(playerId);
-        // ... (keep your existing checks here) ...
-
-        player.setGold(player.getGold() - 15);
-        player.setHealth(player.getMaxHealth());
-
-        player.setStatusMessage("The town healer worked their magic. Health fully restored!");
-        return playerRepository.save(player);
+    private int getTotalStrength(Player player) {
+        int bonus = player.getInventory().stream()
+                .mapToInt(Item::getPower)
+                .sum();
+        return player.getStrength() + bonus;
     }
 
     public Player exploreDungeon(Long playerId) {
@@ -68,35 +34,72 @@ public class PlayerService {
         List<Monster> monsters = monsterRepository.findAll();
         Monster enemy = monsters.get(new Random().nextInt(monsters.size()));
 
-        int damageTaken = Math.max(0, enemy.getStrength() - player.getDefense());
+        int totalStrength = getTotalStrength(player);
+        int combatSkillBonus = totalStrength / 4;
+        int damageTaken = Math.max(0, enemy.getStrength() - (player.getDefense() + combatSkillBonus));
+
         player.setHealth(Math.max(0, player.getHealth() - damageTaken));
 
-        // BUILD THE STORY
         String msg = "A " + enemy.getName() + " appeared! ";
-        msg += "It dealt " + damageTaken + " damage. ";
+        msg += "Total Power: " + totalStrength + ". Damage Taken: " + damageTaken + ". ";
 
         if (player.getHealth() > 0) {
-            player.setGold(player.getGold() + enemy.getGoldDrop());
+            int lootBonus = totalStrength / 2;
+            int totalGold = enemy.getGoldDrop() + lootBonus;
+            player.setGold(player.getGold() + totalGold);
             player.setExperience(player.getExperience() + 25);
-            msg += "You defeated it and found " + enemy.getGoldDrop() + " gold!";
+            msg += "Defeated! Found " + totalGold + " gold.";
 
             if (player.getExperience() >= 100) {
-                // ... (keep your level up logic) ...
                 player.setLevel(player.getLevel() + 1);
                 player.setExperience(0);
                 player.setMaxHealth(player.getMaxHealth() + 20);
                 player.setHealth(player.getMaxHealth());
-                msg += " LEVEL UP! You are now Level " + player.getLevel() + "!";
+                player.setStrength(player.getStrength() + 5);
+                msg += " LEVEL UP! Now Level " + player.getLevel() + "!";
             }
         } else {
-            msg += "YOU DIED! Go see the healer.";
+            msg += "YOU DIED! Visit the healer.";
         }
 
-        player.setStatusMessage(msg); // Attach the story to the player
+        player.setStatusMessage(msg);
         return playerRepository.save(player);
     }
 
+    public Player buyItem(Long playerId, String itemName, int power, int cost) {
+        Player player = getPlayer(playerId);
+        if (player.getGold() < cost) {
+            player.setStatusMessage("You need " + cost + " gold for the " + itemName + "!");
+            return player;
+        }
+        player.setGold(player.getGold() - cost);
+        Item newItem = new Item(itemName, "WEAPON", power, cost / 2, player);
+        player.getInventory().add(newItem);
+        player.setStatusMessage("Bought " + itemName + "! Power +" + power);
+        return playerRepository.save(player);
+    }
 
+    public Player spawnPlayer(String name) {
+        Player player = new Player();
+        player.setName(name);
+        player.setStrength(10 + (int)(Math.random() * 5));
+        player.setDefense(5 + (int)(Math.random() * 3));
+        player.setGold(50);
+        Item sword = new Item("Rusty Sword", "WEAPON", 3, 5, player);
+        player.getInventory().add(sword);
+        return playerRepository.save(player);
+    }
 
+    public Player getPlayer(Long id) {
+        return playerRepository.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
+    }
 
+    public Player healPlayer(Long playerId) {
+        Player player = getPlayer(playerId);
+        if (player.getGold() < 15) throw new RuntimeException("Not enough gold!");
+        player.setGold(player.getGold() - 15);
+        player.setHealth(player.getMaxHealth());
+        player.setStatusMessage("Healed to full!");
+        return playerRepository.save(player);
+    }
 }
