@@ -40,6 +40,23 @@
     <button class="heal-btn" onclick="heal()">Visit Healer (15g)</button>
 
     <hr>
+    <hr>
+    <h3>🛒 Blacksmith Shop</h3>
+    <button onclick="buy('Steel Sword', 10, 50)">Steel Sword (50g)</button>
+    <button onclick="buy('Great Axe', 25, 150)">Great Axe (150g)</button>
+
+    <script>
+        // ... add this function with your others ...
+        function buy(name, power, cost) {
+            fetch(`/api/player/${currentPlayerId}/buy?name=${name}&power=${power}&cost=${cost}`)
+                .then(res => res.json())
+                .then(data => {
+                    updateUI(data);
+                    logMessage(data.statusMessage);
+                });
+        }
+    </script>
+
     <h3>🎒 Inventory</h3>
     <ul id="pInventory" style="list-style-type: none; padding: 0; text-align: left;"></ul>
 </div>
